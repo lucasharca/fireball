@@ -17,6 +17,14 @@ class DiceRoll():
 
         return rolls
     
+    def _verify_crit(self, roll: int) -> CritResult:
+        if roll == 20:
+            return CritResult.SUCCESS
+        elif roll == 1:
+            return CritResult.FAILURE
+        else:
+            return CritResult.NONE
+
     def _build_response(
             self, 
             dice: int = 20, 
@@ -47,30 +55,14 @@ class DiceRoll():
         roll = self._roll()
         total_result = sum(roll) + modifier
 
-        if roll[0] == 20:
-            return self._build_response(
-                dice=20, 
-                modifier=modifier, 
-                rolls=roll, 
-                total=total_result,
-                critical=CritResult.SUCCESS
-            )
-        elif roll[0] == 1:
-            return self._build_response(
-                dice=20, 
-                modifier=modifier, 
-                rolls=roll, 
-                total=total_result,
-                critical=CritResult.FAILURE
-            )
-        else: 
-            return self._build_response(
-                dice=20, 
-                modifier=modifier, 
-                rolls=roll, 
-                total=total_result,
-                critical=CritResult.NONE
-            )
+        return self._build_response(
+            dice=20, 
+            modifier=modifier, 
+            rolls=roll, 
+            total=total_result,
+            critical=self._verify_crit(roll[0])
+        )
+      
 
     def regular_roll(self, times: int = 1, modifier: int = 0) -> RollResponse:
         rolls = self._roll(times)
@@ -98,6 +90,7 @@ class DiceRoll():
             dropped=dropped,
             modifier=modifier,
             total=sum(kept) + modifier,
+            critical=self._verify_crit(kept[0]),
             mode=RollMode.ADVANTAGE,
         )
     
@@ -112,6 +105,7 @@ class DiceRoll():
             kept=kept,
             dropped=dropped,
             total=sum(kept) + modifier, 
+            critical=self._verify_crit(kept[0]),
             modifier=modifier,
             mode=RollMode.DISAVANTAGE,
         )
