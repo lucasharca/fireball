@@ -91,10 +91,6 @@ class DiceRoll():
         kept=[max(rolls)]
         dropped=[min(rolls)]
 
-        print("Entrou aqui mesmo?")
-        print(sum(kept))
-        print(modifier)
-
         return self._build_response(
             dice=self.dice.sides, 
             rolls=rolls, 
