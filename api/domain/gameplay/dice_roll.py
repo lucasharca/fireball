@@ -1,7 +1,9 @@
-from api.domain.dice.interfaces.dice import Dice
-
+from api.domain.dice.standard_dice import StandardDice
+from api.enums.engine import CritResult
+from api.enums.roll_mode import RollMode
+from api.schemas.response.roll_response import RollResponse
 class DiceRoll():
-    def __init__(self, dice: Dice, modifier: int):
+    def __init__(self, dice: StandardDice, modifier: int):
         self.dice = dice
         self.modifier = modifier
     
@@ -15,27 +17,110 @@ class DiceRoll():
 
         return rolls
     
-    def regular_roll(self, times: int = 1) -> dict:
+    def _build_response(
+            self, 
+            dice: int = 20, 
+            times: int = 1, 
+            rolls: list[int] = [],
+            kept: list[int] = [],
+            dropped: list[int] = [],
+            modifier: int = 0,
+            total: int = 0,
+            mode: RollMode = RollMode.CHECK,
+            critical: CritResult = CritResult.NONE
+            ) -> RollResponse:
+        response = RollResponse(
+            dice=dice,
+            times=times,
+            rolls=rolls,
+            kept=kept,
+            dropped=dropped,
+            modifier=modifier,
+            total=total,
+            mode=mode,
+            critical=critical
+        )
+
+        return response
+    
+    def roll_20(self, modifier: int = 0) -> RollResponse: 
+        roll = self._roll()
+        total_result = sum(roll) + modifier
+
+        if roll[0] == 20:
+            return self._build_response(
+                dice=20, 
+                modifier=modifier, 
+                rolls=roll, 
+                total=total_result,
+                critical=CritResult.SUCCESS
+            )
+        elif roll[0] == 1:
+            return self._build_response(
+                dice=20, 
+                modifier=modifier, 
+                rolls=roll, 
+                total=total_result,
+                critical=CritResult.FAILURE
+            )
+        else: 
+            return self._build_response(
+                dice=20, 
+                modifier=modifier, 
+                rolls=roll, 
+                total=total_result,
+                critical=CritResult.NONE
+            )
+
+    def regular_roll(self, times: int = 1, modifier: int = 0) -> RollResponse:
         rolls = self._roll(times)
-        return {
-            "total": sum(rolls),
-            "result": rolls
-        }
+        total_result = sum(rolls) + modifier
+
+        return self._build_response(
+            dice=self.dice.sides,
+            rolls=rolls, 
+            times=times, 
+            total=total_result,
+            modifier=modifier,
+
+            mode=RollMode.NORMAL,
+        )
     
-    def roll_advantage(self) -> dict:
+    def roll_advantage(self, modifier: int = 0) -> RollResponse:
         rolls = self._roll(2)
-        return {
-            "rolls": rolls,
-            "result": max(rolls)
-        }
+        kept=[max(rolls)]
+        dropped=[min(rolls)]
+
+        print("Entrou aqui mesmo?")
+        print(sum(kept))
+        print(modifier)
+
+        return self._build_response(
+            dice=self.dice.sides, 
+            rolls=rolls, 
+            kept=kept, 
+            dropped=dropped,
+            modifier=modifier,
+            total=sum(kept) + modifier,
+            mode=RollMode.ADVANTAGE,
+        )
     
-    def roll_disadvantage(self) -> dict:
+    def roll_disadvantage(self, modifier: int = 0) -> RollResponse:
         rolls = self._roll(2)
-        return {
-            "rolls": rolls,
-            "result": min(rolls)
-        }
-    def roll_and_keep(self, times: int = 2, keep: int = 1) -> dict:
+        kept=[min(rolls)]
+        dropped=[max(rolls)] 
+
+        return self._build_response(
+            dice=self.dice.sides, 
+            rolls=rolls, 
+            kept=kept,
+            dropped=dropped,
+            total=sum(kept) + modifier, 
+            modifier=modifier,
+            mode=RollMode.DISAVANTAGE,
+        )
+    
+    def roll_and_keep(self, times: int = 2, keep: int = 1) -> RollResponse:
         if times < 1 or keep < 0 or keep >= times:
             raise ValueError("Invalid values for times or keep. Check the rules")
         
@@ -43,14 +128,17 @@ class DiceRoll():
         rolls_sorted = sorted(rolls)
         kept = rolls_sorted[-keep:]
         dropped = rolls_sorted[:-keep]
-
-        return {
-            "total": sum(rolls),
-            "kept": kept,
-            "dropped": dropped
-        }
-
-    def roll_and_drop(self, times: int = 2, drop: int = 1) -> dict:
+        return self._build_response(
+            dice=self.dice.sides, 
+            times=times,
+            rolls=rolls, 
+            kept=kept,
+            dropped=dropped, 
+            total=sum(kept),
+            mode=RollMode.NORMAL,
+        )
+    
+    def roll_and_drop(self, times: int = 2, drop: int = 1) -> RollResponse:
         if times < 1 or drop < 0 or drop >= times:
             raise ValueError("Invalid values for times or drop. Check the rules")
         
@@ -59,9 +147,13 @@ class DiceRoll():
         kept = rolls_sorted[drop:]
         dropped = rolls_sorted[:drop]
         
-        return {
-            "total": sum(rolls),
-            "kept": kept,
-            "dropped": dropped
-        }
+        return self._build_response(
+            dice=self.dice.sides, 
+            times=times,
+            rolls=rolls, 
+            kept=kept,
+            dropped=dropped, 
+            total=sum(kept),
+            mode=RollMode.NORMAL,
+        )
             
