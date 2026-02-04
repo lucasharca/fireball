@@ -9,6 +9,5 @@ router = APIRouter()
 
 @router.post("/roll", response_model=RollResponse)
 def post_roll(request: RollRequest):
-    result = DiceController(request).roll()
-    return result
+    return DiceController(request).roll()
     
