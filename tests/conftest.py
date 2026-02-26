@@ -3,7 +3,6 @@ import pytest
 from api.domain.dice.standard_dice import StandardDice
 from api.enums.dice_sides import DiceTypeEnum
 
-from api.schemas.request.roll_request import RollRequest
 from api.domain.gameplay.dice_roll import DiceRoll
 
 

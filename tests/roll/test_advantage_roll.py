@@ -50,7 +50,7 @@ def test_roll_20_advantage_with_crit(dice_roll, monkeypatch):
     assert result.mode == RollMode.ADVANTAGE
     assert result.critical == CritResult.SUCCESS
 
-def test_roll_20_disavantage(dice_roll, monkeypatch):
+def test_roll_20_disadvantage(dice_roll, monkeypatch):
     """
     GIVEN two forced results 5 and 17 
     WHEN rolling with disadvantage
@@ -71,5 +71,5 @@ def test_roll_20_disavantage(dice_roll, monkeypatch):
     assert result.kept == [5]
     assert result.dropped == [17]
     assert result.total == 5
-    assert result.mode == RollMode.DISAVANTAGE
+    assert result.mode == RollMode.DISADVANTAGE
     assert result.critical == CritResult.NONE

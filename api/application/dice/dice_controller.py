@@ -10,7 +10,7 @@ from api.enums.roll_mode import RollMode
 class DiceController:
     def __init__(self, request: RollRequest):
          self.request = request
-         self.dice = StandardDice(sides=DiceTypeEnum(request.dice))
+         self.dice = StandardDice(sides=request.dice)
          self.roller = DiceRoll(self.dice, request.modifier)
     
     def roll(self) -> RollResponse:
@@ -24,7 +24,7 @@ class DiceController:
                    return self._roll_normal()
               case RollMode.ADVANTAGE:
                    return self._roll_advantage()
-              case RollMode.DISAVANTAGE:
+              case RollMode.DISADVANTAGE:
                    return self._roll_disadvantage()
     
     def _roll_20(self) -> RollResponse:

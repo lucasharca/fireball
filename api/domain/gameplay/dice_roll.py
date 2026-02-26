@@ -1,4 +1,5 @@
 from api.domain.dice.standard_dice import StandardDice
+from api.domain.exceptions import InvalidRollParametersError
 from api.enums.engine import CritResult
 from api.enums.roll_mode import RollMode
 from api.schemas.response.roll_response import RollResponse
@@ -9,7 +10,10 @@ class DiceRoll():
     
     def _roll(self, times: int = 1) -> list[int]:
         if times < 1:
-            raise ValueError("times of rolling must be >= 1")
+            raise InvalidRollParametersError(
+                "times of rolling must be >= 1",
+                details={"times": times},
+            )
         
         rolls = []
         for _ in range(times):
@@ -26,17 +30,20 @@ class DiceRoll():
             return CritResult.NONE
 
     def _build_response(
-            self, 
-            dice: int = 20, 
-            times: int = 1, 
-            rolls: list[int] = [],
-            kept: list[int] = [],
-            dropped: list[int] = [],
+            self,
+            dice: int = 20,
+            times: int = 1,
+            rolls: list[int] | None = None,
+            kept: list[int] | None = None,
+            dropped: list[int] | None = None,
             modifier: int = 0,
             total: int = 0,
             mode: RollMode = RollMode.CHECK,
-            critical: CritResult = CritResult.NONE
+            critical: CritResult = CritResult.NONE,
             ) -> RollResponse:
+        rolls = rolls or []
+        kept = kept or []
+        dropped = dropped or []
         response = RollResponse(
             dice=dice,
             times=times,
@@ -107,12 +114,15 @@ class DiceRoll():
             total=sum(kept) + modifier, 
             critical=self._verify_crit(kept[0]),
             modifier=modifier,
-            mode=RollMode.DISAVANTAGE,
+            mode=RollMode.DISADVANTAGE,
         )
     
     def roll_and_keep(self, times: int = 2, keep: int = 1) -> RollResponse:
         if times < 1 or keep < 0 or keep >= times:
-            raise ValueError("Invalid values for times or keep. Check the rules")
+            raise InvalidRollParametersError(
+                "Invalid values for times or keep. Check the rules",
+                details={"times": times, "keep": keep},
+            )
         
         rolls = self._roll(times)
         rolls_sorted = sorted(rolls)
@@ -130,7 +140,10 @@ class DiceRoll():
     
     def roll_and_drop(self, times: int = 2, drop: int = 1) -> RollResponse:
         if times < 1 or drop < 0 or drop >= times:
-            raise ValueError("Invalid values for times or drop. Check the rules")
+            raise InvalidRollParametersError(
+                "Invalid values for times or drop. Check the rules",
+                details={"times": times, "drop": drop},
+            )
         
         rolls = self._roll(times)
         rolls_sorted = sorted(rolls)
